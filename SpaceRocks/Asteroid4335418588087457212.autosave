@@ -1,0 +1,105 @@
+/**************************************************************
+ * Class: Asteroid
+ * Desc: Contains asteroid stats and methods for displaying and moving an 
+         asteroid
+ ***************************************************************/
+class Asteroid {
+  // Asteroid location, velocity and radius
+  PVector location;
+  PVector velocity;
+  int radius;
+
+  // Image for displaying the asteroid
+  PImage asteroidImage;
+
+  /**************************************************************
+   * Function: Asteroid()
+   * Parameters: None
+   * Returns: Void
+   * Desc: Default constructor
+   ***************************************************************/
+  Asteroid() {
+    // Load asteroid image
+    asteroidImage = loadImage("asteroidImage.png");
+
+    // Pick random radius
+    radius = ASTEROID_RADII[int(random(ASTEROID_RADII.length))];
+
+    // Pick starting position on one of the 4 edges
+    int asteroidSpawn = int(random(4));
+    float tempX = 0, tempY = 0;
+    switch (asteroidSpawn) {
+      case 0:
+        tempX = random(0, 0.1 * width);
+        tempY = random(height);
+        break;
+      case 1:
+        tempX = random(0.9 * width);
+        tempY = random(height);
+        break;
+      case 2:
+        tempX = random(width);
+        tempY = random(0.1 * height);
+        break;
+      case 3:
+        tempX = random(width);
+        tempY = random(0.9 * height);
+        break;
+    }
+
+    // Set starting position and speed
+    location = new PVector(tempX, tempY);
+    velocity = new PVector(random(-ASTEROID_MAX_SPEED, ASTEROID_MAX_SPEED),
+                           random(-ASTEROID_MAX_SPEED, ASTEROID_MAX_SPEED));
+  }
+
+  /**************************************************************
+   * Function: Asteroid()
+   * Parameters: None
+   * Returns: Void
+   * Desc: Overloaded constructor for creating child asteroids
+   ***************************************************************/
+  Asteroid(Asteroid parent) {
+    // Load asteroid image
+    asteroidImage = loadImage("asteroidImage.png");
+
+    radius = parent.radius / 2;
+    location = parent.location.copy();
+    velocity = new PVector(random(-ASTEROID_MAX_SPEED, ASTEROID_MAX_SPEED),
+                           random(-ASTEROID_MAX_SPEED, ASTEROID_MAX_SPEED));
+  }
+
+  /**************************************************************
+   * Function: display()
+   * Parameters: None
+   * Returns: Void
+   * Desc: Draws the asteroid at location
+   ***************************************************************/
+  void display() {
+    imageMode(CENTER);
+    image(asteroidImage, location.x, location.y, radius * 2, radius * 2);
+  }
+
+  /**************************************************************
+   * Function: move()
+   * Parameters: None
+   * Returns: Void
+   * Desc: Updates the asteroid position
+   ***************************************************************/
+  void move() {
+    location.add(velocity);
+    // Check the horizontal position against the bounds of the sketch
+    if (location.x < -radius) {
+      location.x = width + radius;
+    } else if (location.x > (width + radius)) {
+      location.x = -radius;
+    }
+    
+    // Check the vertical position against the bounds of the sketch
+    if (location.y < -radius) {
+      location.y = height + radius;
+    } else if (location.y > (height + radius)) {
+      location.y = -radius;
+    }
+  }
+}
