@@ -48,7 +48,7 @@ class Asteroid extends Drifter {
 
   /**************************************************************
    * Function: Asteroid()
-   * Parameters: None
+   * Parameters: Asteroid(parent) - the parent of the child asteroid
    * Returns: Void
    * Desc: Overloaded constructor for creating child asteroids
    ***************************************************************/

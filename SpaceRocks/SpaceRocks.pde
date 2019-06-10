@@ -29,12 +29,10 @@ import processing.sound.*;      // Required for music and sound effects
 Ship player;                      // The player ship
 ArrayList<Asteroid> asteroids;    // The list of asteroids
 ArrayList<Shot> shots;            // The list of shots
+ArrayList<Explosion> explosions;
 boolean shipUp, shipDown, shipLeft, shipRight; // Ship direction flags
 int score = 0;                    // Total score
 int lastShot;                     // Time of last shot
-int lastExplosion;                // Time of last explosion
-float[] explosionLocation;        // Location of explosion
-float explosionSize;              // Size of explosion
 
 // Variable used to control what state the game is in
 // 0 - Menu
@@ -67,8 +65,6 @@ final int GAMEOVER_X = 275;       // Game over text position and size
 final int GAMEOVER_Y = 400;
 final int GAMEOVER_SIZE = 40;
 
-final int EXPLOSION_DURATION = 100; // Time(ms) explosion image stays onscreen
-
 final int MAX_CHILD_ASTEROIDS = 3;  // Maximum number of child asteroids
 
 final color WHITE = #FFFFFF;      // Colour constants
@@ -97,10 +93,9 @@ void setup() {
   player = new Ship();
   asteroids = new ArrayList<Asteroid>();
   shots = new ArrayList<Shot>();
+  explosions = new ArrayList<Explosion>();
   shipUp = shipDown = shipRight = shipLeft = false;
   lastShot = -SHOT_DELAY;
-  lastExplosion = -EXPLOSION_DURATION;
-  explosionLocation = new float[2];
 
   // Load images
   background = loadImage("background.png");
@@ -202,9 +197,11 @@ void drawScore() {
  * Desc: Draws the explosions on screen
  ***************************************************************/
 void drawExplosions() {
-  if (millis() - lastExplosion < EXPLOSION_DURATION) {
-    image(explosion, explosionLocation[0], explosionLocation[1], 
-          explosionSize, explosionSize);
+  for(int i = 0; i < explosions.size(); i++) {
+    explosions.get(i).display();
+    if (explosions.get(i).timer <= 0) {
+      explosions.remove(i);
+    }
   }
 }
 
@@ -241,7 +238,7 @@ void keyPressed() {
     createAsteroids();
   }
   // Fire a shot if enough time has passed since the last shot
-  if (key == ' ' && !player.destroyed && (millis() - lastShot > SHOT_DELAY)) {
+  if (key == ' ' && gameState == 1 && !player.destroyed && (millis() - lastShot > SHOT_DELAY)) {
     shotFired.play();
     shots.add(new Shot());
     lastShot = millis();
@@ -322,17 +319,15 @@ void collisionDetection() {
           && (abs(shots.get(i).location.y - asteroids.get(j).location.y) 
               < (asteroids.get(j).radius + SHOT_SIZE / 2))) {
         asteroidExplosion.play();
-        // Increase the score and save explosion position, size and time
+        // Increase the score, create child asteroids, and create an explosion
         score++;
         if (asteroids.get(j).radius > ASTEROID_RADII[0]) {
           for (int k=0; k < random(MAX_CHILD_ASTEROIDS); k++) {
             asteroids.add(new Asteroid(asteroids.get(j)));
           }
         }
-        explosionLocation[0] = asteroids.get(j).location.x;
-        explosionLocation[1] = asteroids.get(j).location.y;
-        explosionSize = asteroids.get(j).radius * 2;
-        lastExplosion = millis();
+        explosions.add(new Explosion(asteroids.get(j).location, 
+                                     asteroids.get(j).radius));
         // Then remove the shot and asteroid
         shots.remove(i);
         asteroids.remove(j);
@@ -350,11 +345,9 @@ void collisionDetection() {
         && (abs(player.location.y - asteroids.get(i).location.y) 
             < (asteroids.get(i).radius + player.ship.width / 2))) {
       shipExplode.play();
-      // Save explosion position, size and time
-      explosionLocation[0] = player.location.x;
-      explosionLocation[1] = player.location.y;
-      explosionSize = player.ship.width;
-      lastExplosion = millis();
+      // Create an explosion
+      explosions.add(new Explosion(player.location, 
+                                   int(player.ship.width / 2)));
       // Then destroy the ship
       player.destroyed = true;
     }
