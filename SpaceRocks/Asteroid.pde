@@ -3,14 +3,7 @@
  * Desc: Contains asteroid stats and methods for displaying and moving an 
          asteroid
  ***************************************************************/
-class Asteroid {
-  // Asteroid location, velocity and radius
-  PVector location;
-  PVector velocity;
-  int radius;
-
-  // Image for displaying the asteroid
-  PImage asteroidImage;
+class Asteroid extends Drifter {
 
   /**************************************************************
    * Function: Asteroid()
@@ -20,7 +13,7 @@ class Asteroid {
    ***************************************************************/
   Asteroid() {
     // Load asteroid image
-    asteroidImage = loadImage("asteroidImage.png");
+    img = loadImage("asteroidImage.png");
 
     // Pick random radius
     radius = ASTEROID_RADII[int(random(ASTEROID_RADII.length))];
@@ -61,7 +54,7 @@ class Asteroid {
    ***************************************************************/
   Asteroid(Asteroid parent) {
     // Load asteroid image
-    asteroidImage = loadImage("asteroidImage.png");
+    img = loadImage("asteroidImage.png");
 
     radius = parent.radius / 2;
     location = parent.location.copy();
@@ -77,29 +70,6 @@ class Asteroid {
    ***************************************************************/
   void display() {
     imageMode(CENTER);
-    image(asteroidImage, location.x, location.y, radius * 2, radius * 2);
-  }
-
-  /**************************************************************
-   * Function: move()
-   * Parameters: None
-   * Returns: Void
-   * Desc: Updates the asteroid position
-   ***************************************************************/
-  void move() {
-    location.add(velocity);
-    // Check the horizontal position against the bounds of the sketch
-    if (location.x < -radius) {
-      location.x = width + radius;
-    } else if (location.x > (width + radius)) {
-      location.x = -radius;
-    }
-    
-    // Check the vertical position against the bounds of the sketch
-    if (location.y < -radius) {
-      location.y = height + radius;
-    } else if (location.y > (height + radius)) {
-      location.y = -radius;
-    }
+    image(img, location.x, location.y, radius * 2, radius * 2);
   }
 }
