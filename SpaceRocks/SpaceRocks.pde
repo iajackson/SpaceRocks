@@ -19,12 +19,10 @@
               https://freesound.org/s/441497/
  **************************************************************/
 
-//TODO: break asteroids into smaller pieces
 //TODO: update asteroid radii implementation
 //TODO: make asteroids spawn around edges of screen using equation
 //TODO: add random powerups
 //TODO: add player lives
-//TODO: add menu screen
 //TODO: add high score system
 import processing.sound.*;      // Required for music and sound effects
 
@@ -37,6 +35,12 @@ int lastShot;                     // Time of last shot
 int lastExplosion;                // Time of last explosion
 float[] explosionLocation;        // Location of explosion
 float explosionSize;              // Size of explosion
+
+// Variable used to control what state the game is in
+// 0 - Menu
+// 1 - Gameplay
+// 2 - Gameover
+int gameState;
 
 PImage background, explosion;     // Images used for background and explosions
 
@@ -108,6 +112,8 @@ void setup() {
   asteroidExplosion = new SoundFile(this, "asteroidExplosion.wav");
   shipExplode = new SoundFile(this, "shipExplode.wav");
 
+  // Set game to start at the main menu
+  gameState = 0;
   // Initialise asteroids
   createAsteroids();
   // Start background music
@@ -121,33 +127,48 @@ void setup() {
  * Desc: Updates variables and draws assets
  ***************************************************************/
 void draw() {
-  background(background);
-  // Spawn new asteroids if all are destroyed
-  if (asteroids.size() == 0) {
-    createAsteroids();
+  switch(gameState) {
+    case 0:   // Main Menu
+      background(background);
+      fill(WHITE);
+      textSize(40);
+      text("SPACE ROCKS", width / 2, height / 2);
+      break;
+    case 1:   // Gameplay
+      background(background);
+      // Spawn new asteroids if all are destroyed
+      if (asteroids.size() == 0) {
+        createAsteroids();
+      }
+      // Draw the asteroids regardless of if the player is alive
+      drawAsteroids();
+      // If the player is alive, continue the game
+      if (!player.destroyed) {
+        drawShots();
+        player.move();
+        player.display();
+        collisionDetection();
+      } else {
+        gameState = 2;
+      }
+      // Draw the explosion and score regardless of if the player is alive
+      drawExplosions();
+      drawScore();
+      break;
+    case 2:   // Game Over
+      background(background);
+      // Draw the asteroids regardless of if the player is alive
+      drawAsteroids();
+      // Draw the game over text
+      fill(RED);
+      textSize(GAMEOVER_SIZE);
+      text("GAME OVER!", GAMEOVER_X, GAMEOVER_Y);
+      // Draw the explosion and score regardless of if the player is alive
+      drawExplosions();
+      drawScore();
+      break;
   }
-  // Draw the asteroids regardless of if the player is alive
-  drawAsteroids();
-  // If the player is alive, continue the game
-  if (!player.destroyed) {
-    drawShots();
-    player.move();
-    player.display();
-    collisionDetection();
-  } else {
-    // Otherwise end the game
-    fill(RED);
-    textSize(GAMEOVER_SIZE);
-    text("GAME OVER!", GAMEOVER_X, GAMEOVER_Y);
-  }
-  // Draw the explosion and score regardless of if the player is alive
-  if (millis() - lastExplosion < EXPLOSION_DURATION) {
-    image(explosion, explosionLocation[0], explosionLocation[1], 
-          explosionSize, explosionSize);
-  }
-  fill(WHITE);
-  textSize(SCORE_SIZE);
-  text("Score: " + score, SCORE_X, SCORE_Y);
+      
 }
 
 /**************************************************************
@@ -159,6 +180,31 @@ void draw() {
 void createAsteroids() {
   for (int i = 0; i < ASTEROID_NB; i++) {
     asteroids.add(new Asteroid());
+  }
+}
+
+/**************************************************************
+ * Function: drawScore()
+ * Parameters: None
+ * Returns: Void
+ * Desc: Draws the score on screen
+ ***************************************************************/
+void drawScore() {
+  fill(WHITE);
+  textSize(SCORE_SIZE);
+  text("Score: " + score, SCORE_X, SCORE_Y);
+}
+
+/**************************************************************
+ * Function: drawExplosions()
+ * Parameters: None
+ * Returns: Void
+ * Desc: Draws the explosions on screen
+ ***************************************************************/
+void drawExplosions() {
+  if (millis() - lastExplosion < EXPLOSION_DURATION) {
+    image(explosion, explosionLocation[0], explosionLocation[1], 
+          explosionSize, explosionSize);
   }
 }
 
@@ -184,6 +230,15 @@ void keyPressed() {
     if (keyCode == LEFT) {
       shipLeft = true;
     }
+  }
+  // Start a new game if on the main menu or end game screen and S is pressed
+  if ((key == 's' || key == 'S') && (gameState == 0 || gameState == 2)) {
+    gameState = 1;
+    score = 0;
+    player = new Ship();
+    asteroids = new ArrayList<Asteroid>();
+    shots = new ArrayList<Shot>();
+    createAsteroids();
   }
   // Fire a shot if enough time has passed since the last shot
   if (key == ' ' && !player.destroyed && (millis() - lastShot > SHOT_DELAY)) {
